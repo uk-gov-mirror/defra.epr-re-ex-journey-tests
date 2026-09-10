@@ -4,7 +4,7 @@
   "type": "module",
   "description": "",
   "engines": {
-    "node": "^24.20.0"
+    "node": "^24.21.0"
   },
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
