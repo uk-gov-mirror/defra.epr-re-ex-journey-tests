@@ -40,9 +40,13 @@ const AMOUNT = String.raw`-?\d{1,3}(,\d{3})*\.\d{2}`
 const TONNAGE = new RegExp(`^${AMOUNT}$`)
 
 // A figure as the reprocessor and exporter tables state one, which is a
-// tonnage or a sum of money, or the dash the Grand Total row prints where its
-// average price would be, because the publication calculates none for it.
-const FIGURE = new RegExp(`^(£?${AMOUNT}|-)$`)
+// tonnage or a sum of money, or what the Grand Total row prints where its
+// average price would be: the dash, and the text a screen reader is given
+// instead, because the publication calculates none for it. The hidden text
+// is a block of its own, so the browser reads a line break between them.
+const FIGURE = new RegExp(
+  String.raw`^(£?${AMOUNT}|-\s+No average price is calculated)$`
+)
 
 // A report count as the page states one: how many were submitted of how many
 // were expected.
