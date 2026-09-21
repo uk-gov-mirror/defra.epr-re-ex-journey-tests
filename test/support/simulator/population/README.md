@@ -194,8 +194,7 @@ seed at a given scale hands out the same numbers and changes only which
 operator gets which. That is what makes a calibration true of every run instead
 of the average one, and it is not what a seeded generator usually gives: more
 seeds will not show a differently shaped estate, only a differently arranged
-one. What a seed does move is what is drawn rather than allocated, which is the
-materials.
+one.
 
 Active dates are quotas by month rather than one window drawn across evenly.
 The register's own dates thin out from a January tail and run to September, and
@@ -214,16 +213,20 @@ up a bucket. The "both" operators go on the two-registration organisations
 first, because an operator exporting and reprocessing one material is most of
 what the register's are.
 
-Two more marginals are near rather than exact, both because an operator is
-held to the materials and sites it has the registrations to carry. Every
-exporting registration needs a material of its own, so an exporter that has
-drawn plastic twice keeps it once and the other row goes to what is left,
-where glass leads: exported plastic runs about a tenth under its register
-rows and exported glass, glass-other and wood a few rows over. Reprocessed
-glass-other and wood run under by a few rows too, because a reprocessor that
-draws one material more often than it has sites moves the extra row onto
-another material, and that is most often plastic. The site spread shifts by an
-organisation or two, leaving the estate a few sites short of the register's 176.
+The rows of each material are a quota too, one per processing type over the
+rows the plan holds of that type, and each operator takes its rows out of
+that pool in one draw: every row from what is left for its processing type,
+redrawn until the rows between them hold exactly the distinct materials the
+register gave the operator and no more of one material than the service
+approves. The operators with the most rows draw first, while the pool still
+holds every shape, and an operator that finds no shape in what is left hands
+the whole estate's rows back to be dealt again. Taking the rows from a pool
+is what holds the material row totals whatever the operators' shapes ask of
+them.
+
+The site spread is near rather than exact, because an operator is held to the
+sites it has the registrations to carry: it shifts by an organisation or two,
+leaving the estate a few sites short of the register's 176.
 `population.test.js` states the tolerance on each.
 
 A status the register carries only twice would round away to nothing on a small

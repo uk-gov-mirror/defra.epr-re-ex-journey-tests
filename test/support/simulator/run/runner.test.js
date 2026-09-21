@@ -143,13 +143,22 @@ describe('replay', () => {
   })
 
   it('runs operators side by side and each operator in order, up to the concurrency', async () => {
-    const sameDay = events.filter((e) => e.at.startsWith('2026-01-05'))
-    const operators = new Set(sameDay.map((e) => e.organisationId))
-    assert.ok(operators.size >= 3, 'three operators act that day')
-    assert.ok(
-      sameDay.filter((e) => e.organisationId === 'OP-0001').length > 1,
-      'one of them acts more than once'
+    const days = [...new Set(events.map((e) => e.at.slice(0, 10)))]
+    /** @param {string} day */
+    const actsOn = (day) => events.filter((e) => e.at.startsWith(day))
+    /** @param {string} day */
+    const operatorsOn = (day) => actsOn(day).map((e) => e.organisationId)
+    /** @param {string} day */
+    const repeatingOn = (day) =>
+      operatorsOn(day).find(
+        (operator, index, operators) => operators.indexOf(operator) < index
+      )
+    const day = days.find(
+      (day) => new Set(operatorsOn(day)).size >= 3 && repeatingOn(day)
     )
+    assert.ok(day, 'a day on which three operators act and one more than once')
+    const sameDay = actsOn(day)
+    const repeating = repeatingOn(day)
     const recorder = recordingExecutor()
     /** @type {string[]} */
     const executedInOrder = []
@@ -168,10 +177,12 @@ describe('replay', () => {
     await replaying
 
     assert.equal(recorder.widest(), 2)
-    const ofA = executedInOrder.filter((key) => key.startsWith('OP-0001-'))
+    const ofRepeating = executedInOrder.filter((key) =>
+      key.startsWith(`${repeating}-`)
+    )
     assert.deepEqual(
-      ofA,
-      sameDay.filter((e) => e.organisationId === 'OP-0001').map(eventKey)
+      ofRepeating,
+      sameDay.filter((e) => e.organisationId === repeating).map(eventKey)
     )
     assert.equal(executedInOrder.length, sameDay.length)
   })

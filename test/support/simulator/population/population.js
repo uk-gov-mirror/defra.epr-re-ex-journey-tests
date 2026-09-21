@@ -206,142 +206,146 @@ const timesEach = (suffixes) => {
 }
 
 /**
- * Draw every registration a material weighted by what its processing type
- * registers, then hold the organisation to the number of distinct materials
- * the register gave it by keeping the ones it drew most and moving the rest
- * onto those. That is what makes a three-registration, one-material
- * organisation come out of the plan.
- *
- * Drawing first and narrowing afterwards is what keeps the material counts on
- * the register. Picking a set of distinct materials up front excludes each one
- * as it is taken, which inflates the small materials at plastic's expense.
+ * A six-material organisation whose rows are all exporting accepts about one
+ * draw in a thousand, and seven materials over seven exporting rows, which
+ * the committed register never asks for, one in fifty thousand. So a shape
+ * the pool can hold is found long before this, and the estate below draws
+ * again when one is not.
  */
-function assignMaterials(
-  register,
+const MATERIAL_DRAW_ATTEMPTS = 100000
+
+/**
+ * How many times the estate's material rows are dealt out again after some
+ * organisation found no shape it could take in what the earlier ones left.
+ */
+const ESTATE_DRAW_ATTEMPTS = 10
+
+/**
+ * @typedef {Record<PlannedRegistration['processingType'], Record<string, number>>} RowPool
+ *   rows still to be taken, per processing type and material suffix
+ */
+
+/**
+ * Take the organisation's rows out of the estate's pool of material rows in
+ * one draw: every row from what is left for its processing type, kept only
+ * when the rows between them hold exactly the distinct materials the
+ * register gave the organisation and no more of one material than the
+ * service approves, which is one exporting registration per material and
+ * one reprocessing registration per material and site.
+ *
+ * The pool is what holds the material row totals whatever the organisations'
+ * shapes ask of them. Redrawing from the register weights instead would make
+ * a one-material organisation with several rows plastic far more often than
+ * the register has it.
+ *
+ * @param {RowPool} rowPool - the rows taken are removed from it
+ * @param {PlannedRegistration['processingType'][]} processingTypes - per row
+ * @param {number} materialCount - distinct materials the rows must hold between them
+ * @param {number} siteCount
+ * @param {import('./random.js').Random} random
+ * @returns {PlannedRegistration['material'][] | undefined} a material per row, or nothing where the pool holds no shape the organisation can take
+ */
+function takeMaterials(
+  rowPool,
   processingTypes,
   materialCount,
   siteCount,
   random
 ) {
-  const drawn = processingTypes.map((processingType) =>
-    random.weighted(register.rowsByTypeAndMaterial[processingType])
-  )
-
-  // A material serves only the processing types that register it, so holding
-  // one that serves no exporting row leaves the exporting rows a material
-  // short: fibre-based composite is reprocessed and never exported.
   const capacity = { exporter: 1, reprocessor: siteCount }
-  const rowsOfType = timesEach(processingTypes)
-  const serves = (suffix, processingType) =>
-    register.rowsByTypeAndMaterial[processingType][suffix] > 0
-  const held = new Set()
-  const roomToHold = (suffix) => {
-    const holding = [...held, suffix]
-    const slotsLeft = materialCount - holding.length
-    return (
-      slotsLeft >= 0 &&
-      Object.entries(rowsOfType).every(
-        ([processingType, rows]) =>
-          Math.ceil(rows / capacity[processingType]) -
-            holding.filter((s) => serves(s, processingType)).length <=
-          slotsLeft
-      )
+
+  for (let attempt = 0; attempt < MATERIAL_DRAW_ATTEMPTS; attempt++) {
+    const remaining = Object.fromEntries(
+      Object.entries(rowPool).map(([processingType, rows]) => [
+        processingType,
+        { ...rows }
+      ])
     )
-  }
-
-  const timesDrawn = timesEach(drawn)
-  for (const suffix of Object.keys(timesDrawn).sort(
-    (a, b) => timesDrawn[b] - timesDrawn[a]
-  )) {
-    if (roomToHold(suffix)) held.add(suffix)
-  }
-
-  const suffixes = processingTypes.map((processingType, row) => {
-    if (held.has(drawn[row])) return drawn[row]
-
-    const weights = register.rowsByTypeAndMaterial[processingType]
-    return random.weighted(
-      Object.fromEntries(
-        [...held]
-          .filter((suffix) => serves(suffix, processingType))
-          .map((suffix) => [suffix, weights[suffix]])
-      )
-    )
-  })
-
-  // The draw can repeat itself and leave the organisation holding fewer
-  // materials than the register gave it, so a duplicated row moves onto a
-  // material it has not got.
-  //
-  // That is what holds the estate on the register's materials per
-  // organisation, and the material row totals are what pays for it. The row
-  // moved is most often the commonest material and it never moves onto one, so
-  // exported plastic comes out light and the materials exporters rarely
-  // register heavy.
-  while (held.size < materialCount) {
-    const counts = timesEach(suffixes)
-    const duplicated = suffixes
-      .map((suffix, row) => ({ suffix, row }))
-      .filter(({ suffix }) => counts[suffix] > 1)
-    if (duplicated.length === 0) break
-
-    const { row } = duplicated[random.int(0, duplicated.length - 1)]
-    const weights = register.rowsByTypeAndMaterial[processingTypes[row]]
-    const unheld = Object.fromEntries(
-      Object.entries(weights).filter(
-        ([suffix]) => !held.has(suffix) && roomToHold(suffix)
-      )
-    )
-    if (Object.keys(unheld).length === 0) break
-
-    const suffix = random.weighted(unheld)
-    held.add(suffix)
-    suffixes[row] = suffix
-  }
-
-  // The service approves one exporting registration per material and one
-  // reprocessing registration per material and site, so a row past that
-  // moves onto a material with room for it.
-  for (;;) {
-    const counts = timesEach(
+    const suffixes = processingTypes.map((processingType) => {
+      const suffix = random.weighted(remaining[processingType])
+      remaining[processingType][suffix]--
+      return suffix
+    })
+    const rowsOfEach = timesEach(
       suffixes.map((suffix, row) => `${processingTypes[row]} ${suffix}`)
     )
-    const over = suffixes.findIndex(
-      (suffix, row) =>
-        counts[`${processingTypes[row]} ${suffix}`] >
-        capacity[processingTypes[row]]
+    const withinCapacity = processingTypes.every(
+      (processingType, row) =>
+        rowsOfEach[`${processingType} ${suffixes[row]}`] <=
+        capacity[processingType]
     )
-    if (over < 0) break
 
-    const processingType = processingTypes[over]
-    const weights = register.rowsByTypeAndMaterial[processingType]
-    const withRoom = (candidates) =>
-      Object.fromEntries(
-        candidates
-          .filter(
-            (suffix) =>
-              weights[suffix] > 0 &&
-              (counts[`${processingType} ${suffix}`] ?? 0) <
-                capacity[processingType]
-          )
-          .map((suffix) => [suffix, weights[suffix]])
-      )
-    const heldWithRoom = withRoom([...held])
-    const target =
-      Object.keys(heldWithRoom).length > 0
-        ? heldWithRoom
-        : withRoom(Object.keys(weights))
-    if (Object.keys(target).length === 0) {
-      throw new Error(
-        `An organisation cannot hold ${processingTypes.filter((type) => type === processingType).length} ${processingType} registrations across the materials it can register`
+    if (withinCapacity && new Set(suffixes).size === materialCount) {
+      Object.assign(rowPool, remaining)
+      return suffixes.map((suffix) => MATERIALS_BY_SUFFIX[suffix])
+    }
+  }
+  return undefined
+}
+
+/**
+ * The register's rows per material and processing type are a quota over the
+ * rows the plan holds of each type, and each organisation takes its rows
+ * from that pool. The organisations with the most rows take theirs first,
+ * while the pool still holds every shape, and an organisation that finds no
+ * shape in what is left hands the whole estate's rows back to be dealt again.
+ *
+ * @param {import('./calibration.js').Calibration['register']} register
+ * @param {PlannedRegistration['processingType'][][]} processingTypesByOrganisation
+ * @param {number[]} materialCounts - distinct materials per organisation
+ * @param {number[]} siteCounts - per organisation
+ * @param {import('./random.js').Random} random
+ * @returns {PlannedRegistration['material'][][]} a material per row, per organisation
+ */
+function assignMaterials(
+  register,
+  processingTypesByOrganisation,
+  materialCounts,
+  siteCounts,
+  random
+) {
+  const rowsOfEachType = timesEach(processingTypesByOrganisation.flat())
+  const byMostRows = [...processingTypesByOrganisation.keys()].sort(
+    (a, b) =>
+      processingTypesByOrganisation[b].length -
+      processingTypesByOrganisation[a].length
+  )
+
+  let refused = byMostRows[0]
+  for (let attempt = 0; attempt < ESTATE_DRAW_ATTEMPTS; attempt++) {
+    /** @type {RowPool} */
+    const rowPool = { exporter: {}, reprocessor: {} }
+    for (const [processingType, weights] of Object.entries(
+      register.rowsByTypeAndMaterial
+    )) {
+      rowPool[processingType] = timesEach(
+        allocate(weights, rowsOfEachType[processingType] ?? 0, random)
       )
     }
-    const suffix = random.weighted(target)
-    held.add(suffix)
-    suffixes[over] = suffix
+
+    /** @type {PlannedRegistration['material'][][]} */
+    const materials = []
+    const short = byMostRows.find((index) => {
+      const taken = takeMaterials(
+        rowPool,
+        processingTypesByOrganisation[index],
+        materialCounts[index],
+        siteCounts[index],
+        random
+      )
+      if (taken) materials[index] = taken
+      return !taken
+    })
+    if (short === undefined) return materials
+    refused = short
   }
 
-  return suffixes.map((suffix) => MATERIALS_BY_SUFFIX[suffix])
+  const rows = Object.entries(timesEach(processingTypesByOrganisation[refused]))
+    .map(([processingType, count]) => `${count} ${processingType}`)
+    .join(' and ')
+  throw new Error(
+    `An organisation cannot hold ${materialCounts[refused]} materials across ${rows} registrations on ${siteCounts[refused]} sites from the material rows the calibration registers`
+  )
 }
 
 /**
@@ -561,16 +565,17 @@ export function planPopulation({
     fewestMaterials
   )
 
+  const materialsByOrganisation = assignMaterials(
+    register,
+    processingTypesByOrganisation,
+    fittedMaterialCounts,
+    sitesByOrganisation,
+    random
+  )
   const planned = processingTypesByOrganisation.map(
     (processingTypes, index) => ({
       processingTypes,
-      materials: assignMaterials(
-        register,
-        processingTypes,
-        fittedMaterialCounts[index],
-        sitesByOrganisation[index],
-        random
-      )
+      materials: materialsByOrganisation[index]
     })
   )
 

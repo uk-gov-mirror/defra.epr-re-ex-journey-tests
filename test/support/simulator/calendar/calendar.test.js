@@ -926,6 +926,12 @@ describe('PRNs', () => {
     )
   })
 
+  /**
+   * A material with twenty-odd accreditations swings a sixth either side of
+   * the rate by the seed, and a third on a bad one. So a material below forty
+   * accreditations is held to a third on its own, which still catches one
+   * starved or over-issued, and the tenth is asked of them together.
+   */
   it('raises them for every accredited material at that material’s rate', () => {
     const suffixes = [
       ...new Set(accredited.map((registration) => registration.material.suffix))
@@ -936,13 +942,26 @@ describe('PRNs', () => {
       ).sort(),
       suffixes.sort()
     )
+    /** @type {PlannedRegistration[]} */
+    const rare = []
     for (const suffix of suffixes) {
       const members = accredited.filter(
         (registration) => registration.material.suffix === suffix
       )
-      if (members.length < 10) continue
-      near(draftedPerMonth(members), expectedPerMonth(members), 0.25, suffix)
+      const expected = expectedPerMonth(members)
+      if (members.length < 40) {
+        rare.push(...members)
+        near(draftedPerMonth(members), expected, expected / 3, suffix)
+        continue
+      }
+      near(draftedPerMonth(members), expected, 0.25, suffix)
     }
+    near(
+      draftedPerMonth(rare),
+      expectedPerMonth(rare),
+      expectedPerMonth(rare) / 10,
+      'the rarer materials together'
+    )
   })
 
   it('never raises one for a registered-only registration', () => {
