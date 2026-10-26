@@ -15,25 +15,7 @@ import {
   tagAccessibilityTest
 } from '../../support/accessibility.js'
 import { seedAwaitingPrnAndSubmittedReport } from '../../support/seeding/regulator-read.js'
-
-// The page lays the reporting months out as columns, running from January of
-// the reporting year. Naming them here is what lets the journey say the
-// columns arrived in calendar order with none missing, without deciding for
-// itself which month the period should stop at.
-const MONTHS_OF_THE_YEAR = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December'
-]
+import { MONTHS_OF_THE_YEAR } from '../../support/date.js'
 
 // An amount as every page states one: two decimal places, and thousands
 // grouped.
