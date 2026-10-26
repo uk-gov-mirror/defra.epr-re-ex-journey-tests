@@ -1,9 +1,15 @@
 import { Page } from 'page-objects/page'
+import { expectPeriodYear } from './report-period.js'
 import { expect } from '@playwright/test'
 import { UploadSummaryLogPage } from '../upload.summary.log.page.js'
 import { ReportsPage } from './reports.page.js'
+import { currentYear } from '~/test/support/date.js'
 
 class ReportDetailPage extends Page {
+  async expectPeriodYear(year) {
+    await expectPeriodYear(this.page, year)
+  }
+
   open(orgId, regId, year, cadence, period, submissionNumber = 1) {
     return this.page.goto(
       `/organisations/${orgId}/registrations/${regId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
@@ -65,9 +71,7 @@ class ReportDetailPage extends Page {
     await this.page.goBack()
     await this.cancelAndReturnToReports()
     const reportsPage = new ReportsPage(this.page)
-    await expect(reportsPage.heading()).toContainText('Reports', {
-      timeout: 10000
-    })
+    await reportsPage.expectListFor(currentYear())
   }
 }
 

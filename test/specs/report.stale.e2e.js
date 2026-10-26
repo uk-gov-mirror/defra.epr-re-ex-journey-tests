@@ -28,6 +28,7 @@ import { defraIdStub } from '../support/defra-id-stub.js'
 import { expectActionRequiredStatus } from '../support/report-status.js'
 import { createLinkAndLogin } from '../support/login-helper.js'
 import { navigateToReports } from '../support/report-navigation.js'
+import { currentYear } from '~/test/support/date.js'
 
 const PL_FILE =
   'resources/sanity/reprocessorOutput_A26ER5000000001PL_R26ER5000000001PL.xlsx'
@@ -204,7 +205,7 @@ test.describe('Stale report @staleReport', () => {
 
     // "Return to reports" navigates back to the reports list without deleting
     await reportStaleErrorPage.returnToReports().click()
-    expect(await reportsPage.headingText()).toContain('Reports')
+    await reportsPage.expectListFor(currentYear())
 
     // Report is still present — navigating again shows the error page
     await reportsPage.selectActiveActionLink(1)
@@ -215,7 +216,7 @@ test.describe('Stale report @staleReport', () => {
     // "Delete and start again" deletes the report and returns to reports with
     // its un-started action-required status (Due, or Overdue if past due date)
     await reportStaleErrorPage.deleteAndStartAgain()
-    expect(await reportsPage.headingText()).toContain('Reports')
+    await reportsPage.expectListFor(currentYear())
     await expectActionRequiredStatus(page, 1)
 
     await homePage.signOutLink().click()
@@ -281,7 +282,7 @@ test.describe('Stale report @staleReport', () => {
     // "Delete and start again" deletes the report and returns to reports with
     // its un-started action-required status (Due, or Overdue if past due date)
     await reportStaleErrorPage.deleteAndStartAgain()
-    expect(await reportsPage.headingText()).toContain('Reports')
+    await reportsPage.expectListFor(currentYear())
     await expectActionRequiredStatus(page, 1)
 
     await homePage.signOutLink().click()

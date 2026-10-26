@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test'
 import { Page } from 'page-objects/page'
 
 class DashboardPage extends Page {
@@ -41,6 +42,15 @@ class DashboardPage extends Page {
     return this.page.locator('#main-content span.govuk-heading-m', {
       hasText: /^This is \d{4} data$/
     })
+  }
+
+  async expectYear(year) {
+    await expect(this.yearHeading()).toHaveText(`This is ${year} data`, {
+      timeout: 10000
+    })
+    await expect(this.page).toHaveURL(
+      new RegExp(`/organisations/\\d+/${year}(/exporting)?$`)
+    )
   }
 
   chooseDifferentYearLink() {

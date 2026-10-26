@@ -1,6 +1,11 @@
 import { Page } from 'page-objects/page'
+import { expectPeriodYear } from './report-period.js'
 
 class ReportCheckAnswersPage extends Page {
+  async expectPeriodYear(year) {
+    await expectPeriodYear(this.page, year)
+  }
+
   async createReport() {
     await this.clickButton('Create draft report')
   }

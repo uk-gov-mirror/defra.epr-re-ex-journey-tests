@@ -26,6 +26,7 @@ import { summaryLogContentNumbered } from '../support/spreadsheet/summarylogs-co
 import { defraIdStub } from '../support/defra-id-stub.js'
 import { expectActionRequiredStatus } from '../support/report-status.js'
 import { createLinkAndLogin } from '../support/login-helper.js'
+import { currentYear } from '~/test/support/date.js'
 
 async function setupReprocessor(page) {
   const { regNumber, accNumber } = generateNumbers({
@@ -160,8 +161,7 @@ test.describe.serial('Deleting reports', () => {
     await confirmDeleteReportPage.confirmDeletion()
 
     // Should be back on reports list with status reverted to due
-    const reportsHeading = await reportsPage.headingText()
-    expect(reportsHeading).toContain('Reports')
+    await reportsPage.expectListFor(currentYear())
 
     await expectActionRequiredStatus(page, 1)
   })

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { HomePage } from 'page-objects/homepage.js'
+import { DashboardPage } from 'page-objects/dashboard.page.js'
 import { ReportsPage } from 'page-objects/reports/reports.page.js'
 import { ReportDetailPage } from 'page-objects/reports/report.detail.page.js'
 import { TonnesRecycledPage } from '../page-objects/reports/tonnes.recycled.page.js'
@@ -33,6 +34,7 @@ import {
   switchToNewTab
 } from '../support/windowtabs.js'
 import { ReportSubmittedPage } from 'page-objects/reports/report.submitted.page.js'
+import { currentYear } from '~/test/support/date.js'
 
 // Submitted via epr-backend's dev endpoint rather than driving the upload
 // UI: these journeys are about the reports wizard, not the upload itself,
@@ -144,8 +146,7 @@ test.describe('Registered-only reprocessor report flow @registeredOnlyReprocesso
 
       // On tonnes-recycled — back link goes to reports list
       await tonnesRecycledPage.backLink().click()
-      const reportsHeading = await reportsPage.headingText()
-      expect(reportsHeading).toContain('Reports')
+      await reportsPage.expectListFor(currentYear())
 
       // Re-enter the wizard — report is in_progress so the action link
       // routes straight to tonnes-recycled
@@ -224,6 +225,7 @@ test.describe('Registered-only reprocessor report flow @registeredOnlyReprocesso
       expect(checkHeading).toBe(
         'Check your answers before you create this draft report'
       )
+      await reportCheckAnswersPage.expectPeriodYear(currentYear())
 
       // Verify recycling activity values displayed (rendered without formatTonnage, so no trailing zero)
       await checkBodyText(page, '12.5', 10)
@@ -262,7 +264,12 @@ test.describe('Registered-only reprocessor report flow @registeredOnlyReprocesso
       // Close draft tab and return to confirmation page
       await closeCurrentTabAndReturn(newTab)
 
+      await confirmationPage.returnToHome().click()
+      await new DashboardPage(page).expectYear(currentYear())
+      await page.goBack()
+
       await confirmationPage.goToReports().click()
+      await reportsPage.expectListFor(currentYear())
       await reportsPage.selectActiveActionLink(1)
 
       // Confirm and submit report
@@ -292,6 +299,7 @@ test.describe('Registered-only reprocessor report flow @registeredOnlyReprocesso
       await closeCurrentTabAndReturn(newTab)
 
       await reportSubmittedPage.returnToReportsLink().click()
+      await reportsPage.expectListFor(currentYear())
 
       const submittedBadge = await reportsPage.getSubmittedStatusBadge(1)
       const submittedColour = await reportsPage.getSubmittedStatusColour(1)

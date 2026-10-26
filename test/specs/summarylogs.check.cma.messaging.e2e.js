@@ -17,6 +17,7 @@ import {
   registerAndLinkDefraIdUser,
   loginViaHomePage
 } from '../support/login-helper.js'
+import { currentYear } from '~/test/support/date.js'
 
 // PAE-1648 closed-period adjustment messaging copy (en.json
 // summary-log:closedPeriodAdjustments), asserted verbatim by the closed-period
@@ -144,7 +145,7 @@ test.describe('Summary Logs - Check Page with CMA Detection - Closed-period Adju
     // The caption names the material of the one registration this operator
     // holds, so it is that registration's reports and not just a reports page.
     const reportsPage = new ReportsPage(page)
-    expect(await reportsPage.headingText()).toContain('Reports')
+    await reportsPage.expectListFor(currentYear())
     expect(await reportsPage.captionText()).toBe('Paper and board')
 
     await homePage.signOutLink().click()

@@ -34,6 +34,7 @@ import {
 import { expectActionRequiredStatus } from '../support/report-status.js'
 import { MonthlyReportDraftDeclarationPage } from 'page-objects/reports/monthly.report.draft.declaration.page.js'
 import { ReportSubmittedPage } from 'page-objects/reports/report.submitted.page.js'
+import { currentYear } from '~/test/support/date.js'
 
 async function setupAccreditedReprocessor(page) {
   const numbers = generateNumbers({
@@ -145,8 +146,7 @@ test.describe('Accredited reprocessor report flow @accreditedReprocessor', () =>
 
       // On tonnes-recycled — back link goes to reports list
       await tonnesRecycledPage.backLink().click()
-      const reportsHeading = await reportsPage.headingText()
-      expect(reportsHeading).toContain('Reports')
+      await reportsPage.expectListFor(currentYear())
 
       // Re-enter the wizard — report is in_progress so the action link
       // routes straight to tonnes-recycled
@@ -227,8 +227,7 @@ test.describe('Accredited reprocessor report flow @accreditedReprocessor', () =>
       await confirmDeleteReportPage.confirmDeletion()
 
       // Should be back on reports list with status reverted to Due
-      let reportsHeading = await reportsPage.headingText()
-      expect(reportsHeading).toContain('Reports')
+      await reportsPage.expectListFor(currentYear())
 
       await expectActionRequiredStatus(page, 1)
 
@@ -248,8 +247,7 @@ test.describe('Accredited reprocessor report flow @accreditedReprocessor', () =>
       await confirmDeleteReportPage.confirmDeletion()
 
       // Should be back on reports list with status reverted to Due
-      reportsHeading = await reportsPage.headingText()
-      expect(reportsHeading).toContain('Reports')
+      await reportsPage.expectListFor(currentYear())
 
       await expectActionRequiredStatus(page, 1)
     })
@@ -274,8 +272,7 @@ test.describe('Accredited reprocessor report flow @accreditedReprocessor', () =>
       await tonnesRecycledPage.saveAndComeBackLater()
 
       // Should redirect back to reports list
-      const reportsHeading = await reportsPage.headingText()
-      expect(reportsHeading).toContain('Reports')
+      await reportsPage.expectListFor(currentYear())
 
       // Resume the report — should land on tonnes-recycled with pre-populated data
       await reportsPage.selectActiveActionLink(1)
@@ -307,6 +304,7 @@ test.describe('Accredited reprocessor report flow @accreditedReprocessor', () =>
       expect(checkHeading).toBe(
         'Check your answers before you create this draft report'
       )
+      await reportCheckAnswersPage.expectPeriodYear(currentYear())
 
       // Clean up — delete the report
       await reportCheckAnswersPage.deleteAndStartAgainLink().click()
@@ -376,6 +374,7 @@ test.describe('Accredited reprocessor report flow @accreditedReprocessor', () =>
       expect(checkHeading).toBe(
         'Check your answers before you create this draft report'
       )
+      await reportCheckAnswersPage.expectPeriodYear(currentYear())
 
       // Verify data persists to CYA
       await checkBodyText(page, '15.02', 10)
@@ -419,8 +418,7 @@ test.describe('Accredited reprocessor report flow @accreditedReprocessor', () =>
 
       await confirmationPage.goToReports().click()
 
-      const reportsHeading = await reportsPage.headingText()
-      expect(reportsHeading).toContain('Reports')
+      await reportsPage.expectListFor(currentYear())
 
       await reportsPage.selectActiveActionLink(1)
 
@@ -455,6 +453,7 @@ test.describe('Accredited reprocessor report flow @accreditedReprocessor', () =>
       await closeCurrentTabAndReturn(newTab)
 
       await reportSubmittedPage.returnToReportsLink().click()
+      await reportsPage.expectListFor(currentYear())
 
       const submittedBadge = await reportsPage.getSubmittedStatusBadge(1)
       const submittedColour = await reportsPage.getSubmittedStatusColour(1)

@@ -337,9 +337,12 @@ export function approveMigratedRegistration(
  * today and discards the status history sent with it, so the history is only
  * honoured in a PUT that leaves the statuses as they are.
  *
- * @returns {Promise<{refNo: string, email: string, years: number[], organisationNumber: number, registrationNumber: string}>}
+ * @param {{reprocessingType?: 'input' | 'output'}} [options]
+ * @returns {Promise<{refNo: string, email: string, years: number[], organisationNumber: number, registrationNumber: string, registrationId: string}>}
  */
-export async function seedOrganisationAcrossYears() {
+export async function seedOrganisationAcrossYears({
+  reprocessingType = 'input'
+} = {}) {
   const thisYear = currentYear()
   const firstYear = thisYear - 2
   const createdOn = `${firstYear - 1}-12-31`
@@ -349,12 +352,12 @@ export async function seedOrganisationAcrossYears() {
   ])
 
   const numbers = fillerNumbers()
-  const { email } = await approveMigratedRegistration(
+  const { email, registrationId } = await approveMigratedRegistration(
     refNo,
     { registrationIndex: 0, accreditationIndex: 0 },
     {
       ...numbers,
-      reprocessingType: 'input',
+      reprocessingType,
       validFrom: `${firstYear}-01-01`,
       validTo: `${thisYear + 1}-01-01`,
       submittedToRegulator: 'ea'
@@ -381,7 +384,8 @@ export async function seedOrganisationAcrossYears() {
     email,
     years,
     organisationNumber: orgId,
-    registrationNumber: numbers.regNumber
+    registrationNumber: numbers.regNumber,
+    registrationId
   }
 }
 
