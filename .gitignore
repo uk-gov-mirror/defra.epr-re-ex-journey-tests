@@ -9,6 +9,7 @@ coverage
 .cache
 .png
 allure-report/
+zap-report/
 allure-results/
 test-artifacts/
 test-results/

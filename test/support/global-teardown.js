@@ -1,11 +1,16 @@
 import allure from 'allure-commandline'
 import { copyAllureCategories } from './allure-report.js'
 import { defraIdStub } from './defra-id-stub.js'
+import { collectZapReport } from './zap.js'
 
 const oneMinute = 60 * 1000
 const isLocalDev = !process.env.CI && !process.env.ENVIRONMENT
 
 export default async function globalTeardown() {
+  // Before the local-only report generation below, so the ZAP result is in
+  // allure-results by the time `allure generate` reads them.
+  await collectZapReport()
+
   // wdio.local.conf.js's onComplete hook used to do this after every local
   // run; carry it over so `npm run test:local` still auto-opens the report
   // instead of leaving it for a separate `npm run report` step. CI/CDP

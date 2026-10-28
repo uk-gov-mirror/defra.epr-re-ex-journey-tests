@@ -17,7 +17,7 @@
     "page-objects": "test/page-objects"
   },
   "scripts": {
-    "clean": "rm -rf allure-results && rm -rf allure-report",
+    "clean": "rm -rf allure-results && rm -rf allure-report && rm -rf zap-report",
     "test": "npm run clean && NODE_OPTIONS='--loader esm-module-alias/loader' playwright test --config=playwright.config.js",
     "test:smoketest": "npm run clean && RUN_LIGHTHOUSE=true NODE_OPTIONS='--loader esm-module-alias/loader' playwright test --config=playwright.config.js --grep @smoketest",
     "test:extTestOnly": "npm run clean && NODE_OPTIONS='--loader esm-module-alias/loader' playwright test --config=playwright.config.js --grep @extTestOnly",
@@ -26,6 +26,7 @@
     "test:local:admin": "npm run clean && NODE_OPTIONS='--loader esm-module-alias/loader' playwright test --config=playwright.config.js 'specs/admin/'",
     "test:local:debug": "npm run clean && NODE_OPTIONS='--loader esm-module-alias/loader' DEBUG=true playwright test --config=playwright.config.js",
     "test:local:grep": "npm run clean && NODE_OPTIONS='--loader esm-module-alias/loader' playwright test --config=playwright.config.js --grep \"$GREP\"",
+    "test:zap": "npm run clean && HTTP_PROXY=http://localhost:8888 ZAP_API_URL=http://localhost:8888 NODE_OPTIONS='--loader esm-module-alias/loader' playwright test --config=playwright.config.js",
     "test:localonly": "npm run clean && NODE_OPTIONS='--loader esm-module-alias/loader' playwright test --config=playwright.localonly.config.js",
     "test:localonly:grep": "npm run clean && NODE_OPTIONS='--loader esm-module-alias/loader' playwright test --config=playwright.localonly.config.js --grep \"$GREP\"",
     "test:github": "npm run clean && npm run test:github:browser",

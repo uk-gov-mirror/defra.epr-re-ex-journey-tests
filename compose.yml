@@ -250,7 +250,7 @@ services:
       BASIC_AUTH_PASSWORD: basicAuthPassword
       CDP_UPLOADER_URL: http://cdp-uploader:7337
       COMMAND_QUEUE_SQS_ENDPOINT: http://floci:4566
-      DECEMBER_WASTE_WINDOW_START: "${DECEMBER_WASTE_WINDOW_START:-01-01T00:00}"
+      DECEMBER_WASTE_WINDOW_START: '${DECEMBER_WASTE_WINDOW_START:-01-01T00:00}'
       DEFRA_ID_CLIENT_ID: 63983fc2-cfff-45bb-8ec2-959e21062b9a
       DEFRA_ID_OIDC_WELL_KNOWN_URL: http://defra-id-stub:3200/epr-re-ex-defra-id-stub/.well-known/openid-configuration
       ENTRA_OIDC_WELL_KNOWN_CONFIGURATION_URL: http://entra-stub:3010/.well-known/openid-configuration
@@ -318,8 +318,8 @@ services:
       NODE_ENV: development
       PORT: 3000
       REAPPLY_ACCREDITATION_BASE_URL: https://epr-register-enrol-frontend.dev.cdp-int.defra.cloud
-      REAPPLY_ACCREDITATION_WINDOW_START: "01-01T00:00"
-      REAPPLY_ACCREDITATION_WINDOW_END: "12-31T23:59"
+      REAPPLY_ACCREDITATION_WINDOW_START: '01-01T00:00'
+      REAPPLY_ACCREDITATION_WINDOW_END: '12-31T23:59'
       REDIS_HOST: redis
       SESSION_CACHE_ENGINE: redis
       USE_SINGLE_INSTANCE_CACHE: true
@@ -389,6 +389,41 @@ services:
       interval: 3s
       start_period: 2s
       retries: 3
+
+  ################################################################################
+  # Security scanning (opt-in: `docker compose --profile zap up`)
+  ################################################################################
+
+  # OWASP ZAP as a passive-scanning proxy for `npm run test:zap`. Host
+  # networking rather than cdp-tenant because the browser is pointed at
+  # http://localhost:3000 (and :3002 for admin) - Playwright forces loopback
+  # traffic through the proxy, so ZAP must resolve `localhost` to the host's
+  # published ports, not to its own container. The API shares port 8888 with
+  # the proxy and has no key: it's only for local/CI throwaway stacks.
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:2.17.0@sha256:030d3df57735dacbb83464854758e674dd9ad01d79d12a129a8e58b1fd384238
+    profiles:
+      - zap
+    network_mode: host
+    command:
+      - zap.sh
+      - -daemon
+      - -host
+      - 0.0.0.0
+      - -port
+      - '8888'
+      - -config
+      - api.disablekey=true
+      - -config
+      - api.addrs.addr.name=.*
+      - -config
+      - api.addrs.addr.regex=true
+    healthcheck:
+      test:
+        ['CMD', 'curl', '-sf', 'http://localhost:8888/JSON/core/view/version/']
+      interval: 5s
+      start_period: 30s
+      retries: 12
 
 networks:
   cdp-tenant:

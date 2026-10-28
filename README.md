@@ -162,6 +162,30 @@ The default proxy port is 7777. You can point at a different proxy (e.g. one alr
 WITH_PROXY=true HTTP_PROXY=http://localhost:8888 npm run test:local
 ```
 
+### Running with ZAP (passive security scan)
+
+[OWASP ZAP](https://www.zaproxy.org/) can sit in front of the browser as a passive-scanning proxy. The journeys do the sign-in and click through every page, so ZAP sees all the authenticated pages that its own spider can't get to. Passive scanning only inspects the traffic going through it and never sends requests of its own, so it doesn't change any test data or the test results.
+
+Start ZAP alongside the local stack (it's behind a compose profile, so a plain `docker compose up` won't start it):
+
+```bash
+docker compose --profile zap up -d --wait zap
+```
+
+Then run the journeys through it:
+
+```bash
+npm run test:zap
+# or a subset, e.g.
+npm run test:zap -- --grep @smoketest
+```
+
+When the run finishes, the suite waits for ZAP's passive scan to drain, then writes `zap-report/zap-report.html` and `zap-report/zap-alerts.json`. It also adds a **Security › ZAP › ZAP passive scan** result to the Allure report with both files attached. That result is marked failed if there are any High-risk alerts against epr-frontend (`localhost:3000`) or the admin frontend (`localhost:3002`). Alerts on the stubs are left out. The Playwright run's exit code is unaffected.
+
+Each run starts a fresh ZAP session, so the ZAP container can stay up between runs. Only the browser goes through ZAP: the suite's direct API/seeding calls don't (unless `WITH_PROXY` is also set), and neither do the frontends' server-side calls to epr-backend.
+
+ZAP uses host networking because the browser targets `localhost`. That works on Linux and in CI, but on Docker Desktop host networking has to be turned on in its settings.
+
 ### Feature flags in journey tests
 
 **`compose.yml` is the single source of flag state.** Each `FEATURE_FLAG_*` env
