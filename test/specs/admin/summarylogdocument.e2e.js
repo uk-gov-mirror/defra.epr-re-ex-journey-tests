@@ -4,6 +4,7 @@ import { AdminLoginPage } from 'page-objects/admin/login.page'
 import { OrganisationsPage } from 'page-objects/admin/organisations.page'
 import { OrganisationOverviewPage } from 'page-objects/admin/organisation.overview.page'
 import { RegistrationOverviewPage } from 'page-objects/admin/registration.overview.page'
+import { RegistrationYearPage } from 'page-objects/admin/registration.year.page'
 import { SummaryLogDocumentPage } from 'page-objects/admin/summary.log.document.page'
 import { seedAdminActivityData } from '../../support/seeding/admin-activity.js'
 
@@ -19,10 +20,10 @@ test.describe('Admin summary log document view', () => {
     seeded = await seedAdminActivityData()
   })
 
-  // Reaches the seeded reprocessor's registration overview through the admin
-  // UI (search -> organisation -> registration), returning the page object
-  // positioned on the registration overview.
-  const openRegistrationOverview = async (page) => {
+  // Reaches the year page holding the seeded reprocessor's summary log through
+  // the admin UI (search -> organisation -> registration -> year), returning
+  // the page object positioned on that year page.
+  const openRegistrationYear = async (page) => {
     const loginPage = new AdminLoginPage(page)
     const organisationsPage = new OrganisationsPage(page)
     const organisationOverviewPage = new OrganisationOverviewPage(page)
@@ -33,25 +34,25 @@ test.describe('Admin summary log document view', () => {
     await organisationsPage.searchFor(seeded.companyName)
     await organisationsPage.viewLink(1)
     await organisationOverviewPage.viewRegistrationLink(1)
+    await registrationOverviewPage.viewYear(seeded.accreditationYear)
 
-    return registrationOverviewPage
+    return new RegistrationYearPage(page)
   }
 
-  test('An admin opens a submitted summary log as pretty-printed JSON from the registration overview @summaryLogDocument', async ({
+  test('An admin opens a submitted summary log as pretty-printed JSON from the registration year page @summaryLogDocument', async ({
     page
   }) => {
-    const registrationOverviewPage = await openRegistrationOverview(page)
+    const registrationYearPage = await openRegistrationYear(page)
     const summaryLogDocumentPage = new SummaryLogDocumentPage(page)
 
     // The Actions column offers View data alongside Download.
-    const actionLinks =
-      await registrationOverviewPage.getSummaryLogActionLinks(1)
+    const actionLinks = await registrationYearPage.getSummaryLogActionLinks(1)
     expect(actionLinks.map((link) => link.text)).toEqual([
       'View data',
       'Download'
     ])
 
-    await registrationOverviewPage.clickViewSummaryLogData(1)
+    await registrationYearPage.clickViewSummaryLogData(1)
 
     // The document page names itself.
     expect(await summaryLogDocumentPage.getHeaderText()).toEqual('Summary log')

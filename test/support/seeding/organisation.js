@@ -338,7 +338,7 @@ export function approveMigratedRegistration(
  * honoured in a PUT that leaves the statuses as they are.
  *
  * @param {{reprocessingType?: 'input' | 'output'}} [options]
- * @returns {Promise<{refNo: string, email: string, years: number[], organisationNumber: number, registrationNumber: string, registrationId: string}>}
+ * @returns {Promise<{refNo: string, email: string, companyName: string, years: number[], organisationNumber: number, registrationNumber: string, accreditationNumber: string, registrationId: string}>}
  */
 export async function seedOrganisationAcrossYears({
   reprocessingType = 'input'
@@ -347,7 +347,7 @@ export async function seedOrganisationAcrossYears({
   const firstYear = thisYear - 2
   const createdOn = `${firstYear - 1}-12-31`
 
-  const { orgId, refNo } = await createLinkedOrganisation([
+  const { orgId, refNo, organisation } = await createLinkedOrganisation([
     { material: 'Paper or board (R3)', wasteProcessingType: 'Reprocessor' }
   ])
 
@@ -382,9 +382,11 @@ export async function seedOrganisationAcrossYears({
   return {
     refNo,
     email,
+    companyName: organisation.companyName,
     years,
     organisationNumber: orgId,
     registrationNumber: numbers.regNumber,
+    accreditationNumber: numbers.accNumber,
     registrationId
   }
 }

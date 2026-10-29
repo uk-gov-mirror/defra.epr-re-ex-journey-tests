@@ -5,6 +5,7 @@ import { Navigation } from 'page-objects/admin/navigation.page'
 import { OrganisationsPage } from 'page-objects/admin/organisations.page'
 import { OrganisationOverviewPage } from 'page-objects/admin/organisation.overview.page'
 import { RegistrationOverviewPage } from 'page-objects/admin/registration.overview.page'
+import { RegistrationYearPage } from 'page-objects/admin/registration.year.page'
 import { JsonEditor } from 'page-objects/admin/jsoneditor.page'
 import {
   createLinkedOrganisation,
@@ -128,6 +129,7 @@ test.describe('Organisations page', () => {
     const organisationsPage = new OrganisationsPage(page)
     const organisationOverviewPage = new OrganisationOverviewPage(page)
     const registrationOverviewPage = new RegistrationOverviewPage(page)
+    const registrationYearPage = new RegistrationYearPage(page)
 
     const linkedOrganisation = await createLinkedOrganisation([
       { material: 'Paper or board (R3)', wasteProcessingType: 'Reprocessor' },
@@ -195,10 +197,11 @@ test.describe('Organisations page', () => {
       `${organisation.companyName} - ${reprocessorNumbers.regNumber}`
     )
 
-    await expect(registrationOverviewPage.reportsTable()).toBeVisible()
+    await registrationOverviewPage.viewLatestYear()
 
-    const summaryLogContent =
-      await registrationOverviewPage.getSummaryLogsContent()
+    await expect(registrationYearPage.reportsTable()).toBeVisible()
+
+    const summaryLogContent = await registrationYearPage.getSummaryLogsContent()
     expect(summaryLogContent).toContain('No summary logs')
   })
 
@@ -208,6 +211,7 @@ test.describe('Organisations page', () => {
     const organisationsPage = new OrganisationsPage(page)
     const organisationOverviewPage = new OrganisationOverviewPage(page)
     const registrationOverviewPage = new RegistrationOverviewPage(page)
+    const registrationYearPage = new RegistrationYearPage(page)
     const unsubmitConfirmationPage = new UnsubmitConfirmationPage(page)
 
     await checkAccessibility(page, 'Home')
@@ -229,7 +233,7 @@ test.describe('Organisations page', () => {
 
     const { organisation } = linkedOrganisation
 
-    await createSubmittedReport(linkedOrganisation.refNo)
+    const { year } = await createSubmittedReport(linkedOrganisation.refNo)
 
     await organisationsPage.open()
     await checkAccessibility(page, 'Organisations')
@@ -259,17 +263,19 @@ test.describe('Organisations page', () => {
     await checkAccessibility(page, 'Organisation overview')
 
     await organisationOverviewPage.viewRegistrationLink(1)
+    await checkAccessibility(page, 'Registration overview')
+    await registrationOverviewPage.viewYear(year)
 
-    let reportsData = await registrationOverviewPage.getReportsTableData()
+    let reportsData = await registrationYearPage.getReportsTableData()
     const lastRowIdx = reportsData.length - 1
     expect(reportsData.length).toBeGreaterThanOrEqual(1)
     expect(reportsData[lastRowIdx].status).toEqual('Submitted')
     expect(reportsData[lastRowIdx].actions).toContain('View')
     expect(reportsData[lastRowIdx].actions).toContain('Unsubmit')
-    await checkAccessibility(page, 'Registration overview')
+    await checkAccessibility(page, 'Registration year')
 
     // unsubmit report
-    await registrationOverviewPage.clickOnUnsubmitReportLink(lastRowIdx + 1)
+    await registrationYearPage.clickOnUnsubmitReportLink(lastRowIdx + 1)
     const warningText = await unsubmitConfirmationPage.getWarningText()
     expect(warningText).toContain(
       "Unsubmitting will move the report back to 'ready to submit'. The operator will need to delete and resubmit it."
@@ -280,9 +286,9 @@ test.describe('Organisations page', () => {
     const successMessage = await unsubmitConfirmationPage.getSuccessMessage()
     expect(successMessage).toEqual('Report unsubmitted')
 
-    await unsubmitConfirmationPage.returnToRegistrationOverviewLink().click()
+    await unsubmitConfirmationPage.returnToYearLink(year).click()
 
-    reportsData = await registrationOverviewPage.getReportsTableData()
+    reportsData = await registrationYearPage.getReportsTableData()
     expect(reportsData.length).toBeGreaterThanOrEqual(1)
     expect(reportsData[lastRowIdx].status).toEqual('Ready to submit')
     expect(reportsData[lastRowIdx].actions).not.toContain('Unsubmit')

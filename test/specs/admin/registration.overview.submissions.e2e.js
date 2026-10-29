@@ -4,6 +4,7 @@ import { AdminLoginPage } from 'page-objects/admin/login.page'
 import { OrganisationsPage } from 'page-objects/admin/organisations.page'
 import { OrganisationOverviewPage } from 'page-objects/admin/organisation.overview.page'
 import { RegistrationOverviewPage } from 'page-objects/admin/registration.overview.page'
+import { RegistrationYearPage } from 'page-objects/admin/registration.year.page'
 import { ReportViewPage } from 'page-objects/admin/report.view.page'
 import { UnsubmitConfirmationPage } from 'page-objects/admin/unsubmit.confirmation.page'
 import {
@@ -39,6 +40,7 @@ test.describe('Registration overview - multiple submissions per period', () => {
     const organisationsPage = new OrganisationsPage(page)
     const organisationOverviewPage = new OrganisationOverviewPage(page)
     const registrationOverviewPage = new RegistrationOverviewPage(page)
+    const registrationYearPage = new RegistrationYearPage(page)
     const reportViewPage = new ReportViewPage(page)
     const unsubmitConfirmationPage = new UnsubmitConfirmationPage(page)
 
@@ -51,10 +53,11 @@ test.describe('Registration overview - multiple submissions per period', () => {
     await organisationsPage.searchFor(companyName)
     await organisationsPage.viewLink(1)
     await organisationOverviewPage.viewRegistrationLink(1)
+    await registrationOverviewPage.viewYear(RESTATED_PERIOD.year)
 
     // The restated period renders two rows: the submitted first submission
     // and a requires_resubmission skeleton with nothing to view yet.
-    let reportsData = await registrationOverviewPage.getReportsTableData()
+    let reportsData = await registrationYearPage.getReportsTableData()
     let quarterOneRows = reportsData.filter(isQuarterOne2026)
     expect(quarterOneRows).toHaveLength(2)
 
@@ -98,7 +101,7 @@ test.describe('Registration overview - multiple submissions per period', () => {
     })
     await page.reload()
 
-    reportsData = await registrationOverviewPage.getReportsTableData()
+    reportsData = await registrationYearPage.getReportsTableData()
     quarterOneRows = reportsData.filter(isQuarterOne2026)
     // Row order relies on the backend calendar sorting items within a period
     // by submissionNumber ascending (build-all-submission-periods.js), which
@@ -139,17 +142,13 @@ test.describe('Registration overview - multiple submissions per period', () => {
       reportsData.findIndex(
         (row) => isQuarterOne2026(row) && row.submission === '2'
       ) + 1
-    await registrationOverviewPage.clickOnViewReportLink(
-      firstSubmissionRowNumber
-    )
+    await registrationYearPage.clickOnViewReportLink(firstSubmissionRowNumber)
     expect(await reportViewPage.getHeaderText()).toEqual(
       'Report – 2026 quarterly period 1 submission 1'
     )
     await page.goBack()
 
-    await registrationOverviewPage.clickOnViewReportLink(
-      secondSubmissionRowNumber
-    )
+    await registrationYearPage.clickOnViewReportLink(secondSubmissionRowNumber)
     expect(await reportViewPage.getHeaderText()).toEqual(
       'Report – 2026 quarterly period 1 submission 2'
     )
@@ -157,7 +156,7 @@ test.describe('Registration overview - multiple submissions per period', () => {
 
     // Unsubmit the second submission: the confirm and result pages both name
     // the affected submission.
-    await registrationOverviewPage.clickOnUnsubmitReportLink(
+    await registrationYearPage.clickOnUnsubmitReportLink(
       secondSubmissionRowNumber
     )
     expect(await unsubmitConfirmationPage.getDetailsText()).toContain(

@@ -6,6 +6,7 @@ import { OrganisationsPage } from 'page-objects/admin/organisations.page'
 import { OrganisationOverviewPage } from 'page-objects/admin/organisation.overview.page'
 import { PrnActivityPage } from 'page-objects/admin/prn.activity.page'
 import { RegistrationOverviewPage } from 'page-objects/admin/registration.overview.page'
+import { RegistrationYearPage } from 'page-objects/admin/registration.year.page'
 import { parseCsvBody } from '../../support/csv.js'
 import { seedAdminActivityData } from '../../support/seeding/admin-activity.js'
 test.describe('PRN activity page', () => {
@@ -49,22 +50,24 @@ test.describe('PRN activity page', () => {
     expect(csv.body).toContain(seeded.accreditationNumber)
   })
 
-  test("Should download one accreditation's PRN activity from its registration overview @prnActivity", async ({
+  test("Should download one accreditation's PRN activity from its accreditation year page @prnActivity", async ({
     page
   }) => {
     const loginPage = new AdminLoginPage(page)
     const organisationsPage = new OrganisationsPage(page)
     const organisationOverviewPage = new OrganisationOverviewPage(page)
     const registrationOverviewPage = new RegistrationOverviewPage(page)
+    const registrationYearPage = new RegistrationYearPage(page)
 
     await loginPage.loginAsServiceMaintainer()
     await organisationsPage.open()
     await organisationsPage.searchFor(seeded.companyName)
     await organisationsPage.viewLink(1)
     await organisationOverviewPage.viewRegistrationLink(1)
+    await registrationOverviewPage.viewYear(seeded.accreditationYear)
 
-    const csv = await registrationOverviewPage.download(
-      registrationOverviewPage.prnActivityDownloadLink()
+    const csv = await registrationYearPage.download(
+      registrationYearPage.prnActivityDownloadLink()
     )
     expect(csv.failure).toBeNull()
     expect(csv.filename).toEqual(

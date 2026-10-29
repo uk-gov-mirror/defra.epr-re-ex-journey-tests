@@ -20,9 +20,9 @@ class UnsubmitConfirmationPage extends AdminPage {
     return this.page.locator('.govuk-panel__title').innerText()
   }
 
-  returnToRegistrationOverviewLink() {
+  returnToYearLink(year) {
     return this.page.locator('a', {
-      hasText: /^\s*Back to registration overview\s*$/
+      hasText: new RegExp(`^\\s*Back to ${year}\\s*$`)
     })
   }
 }
