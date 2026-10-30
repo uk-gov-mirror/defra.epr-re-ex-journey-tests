@@ -77,19 +77,16 @@ test.describe('Registration overview years', () => {
       expect(await registrationOverviewPage.getYearsTableData()).toEqual([
         {
           year: `${thisYear}`,
-          registrationStatus: 'approved',
           accreditationStatus: 'approved',
           accreditationNumber: seeded.accreditationNumber
         },
         {
           year: `${lastYear}`,
-          registrationStatus: 'approved',
           accreditationStatus: 'Not accredited',
           accreditationNumber: '-'
         },
         {
           year: `${firstYear}`,
-          registrationStatus: 'approved',
           accreditationStatus: 'Not accredited',
           accreditationNumber: '-'
         }

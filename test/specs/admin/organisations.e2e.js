@@ -181,9 +181,7 @@ test.describe('Organisations page', () => {
         registrationStatus: 'approved',
         processingType: 'reprocessor - input',
         material: 'paper',
-        site: registrations[0].streetAddress,
-        accreditationNumber: reprocessorNumbers.accNumber,
-        accreditationStatus: 'approved'
+        site: registrations[0].streetAddress
       }
     ]
     expect(registrationsData).toEqual(expectedRegistrationsData)

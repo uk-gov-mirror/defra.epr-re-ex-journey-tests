@@ -16,9 +16,8 @@ class RegistrationOverviewPage extends AdminPage {
       const row = rows.nth(i)
       data.push({
         year: await row.locator('td:nth-child(1)').innerText(),
-        registrationStatus: await row.locator('td:nth-child(2)').innerText(),
-        accreditationStatus: await row.locator('td:nth-child(3)').innerText(),
-        accreditationNumber: await row.locator('td:nth-child(4)').innerText()
+        accreditationStatus: await row.locator('td:nth-child(2)').innerText(),
+        accreditationNumber: await row.locator('td:nth-child(3)').innerText()
       })
     }
 
