@@ -5,6 +5,8 @@ import { Navigation } from 'page-objects/admin/navigation.page'
 import { WasteRecordsExportPage } from 'page-objects/admin/waste.records.export.page'
 import { parseCsvBody } from '../../support/csv.js'
 import { checkAccessibility } from '../../support/accessibility.js'
+import { currentYear } from '../../support/date.js'
+import { availableWasteRecordYears } from '../../support/waste-record-years.js'
 
 test.describe('Waste records export page', () => {
   test('An admin downloads one year of waste records @wasteRecordsExport', async ({
@@ -20,11 +22,12 @@ test.describe('Waste records export page', () => {
     await navigation.clickOnLink('Waste records export')
     await checkAccessibility(page, 'Waste records export')
 
-    const years = await wasteRecordsExportPage.availableYears()
-    expect(years[0]).toEqual('2026')
-    expect(years.map(Number)).toEqual(years.map((_, i) => 2026 + i))
-    const latestYear = /** @type {string} */ (years.at(-1))
-    await expect(wasteRecordsExportPage.yearDropdown()).toHaveValue(latestYear)
+    expect(await wasteRecordsExportPage.availableYears()).toEqual(
+      await availableWasteRecordYears()
+    )
+    await expect(wasteRecordsExportPage.yearDropdown()).toHaveValue(
+      String(currentYear())
+    )
 
     await wasteRecordsExportPage.yearDropdown().selectOption('2026')
     const csv = await wasteRecordsExportPage.download(
